@@ -8,7 +8,7 @@ function PlayRequest(p1, p2, observer){
     this.execute = function(){
         if (isInvalid(p1) || isInvalid(p2))
             observer.invalid()
-        else if (tie())
+        else if (draw())
             observer.tie()
         else if (p1Won())
             observer.p1Wins()
@@ -16,11 +16,11 @@ function PlayRequest(p1, p2, observer){
             observer.p2Wins()
     }
 
-    function isInvalid(theThrow) {
-        return !["rock", "paper", "scissors"].includes(theThrow)
+    function isInvalid(theShape) {
+        return !["rock", "paper", "scissors"].includes(theShape)
     }
 
-    function tie() {
+    function draw() {
         return p1 === p2
     }
 
