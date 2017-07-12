@@ -1,18 +1,33 @@
-function Requests(){
-    this.play = function(p1, p2, observer){
-        if (!["rock", "paper", "scissors"].includes(p1) || !["rock", "paper", "scissors"].includes(p2))
-            observer.invalid()
-        else if (p1 === p2)
-            observer.tie()
-        else if (
-            p1 === "rock"     && p2 === "scissors"  ||
-            p1 === "scissors" && p2 === "paper"     ||
-            p1 === "paper"    && p2 === "rock"
+function Requests() {
+    this.play = function (p1, p2, observer) {
+        new PlayRequest(p1, p2, observer).execute()
+    }
+}
 
-        )
+function PlayRequest(p1, p2, observer){
+    this.execute = function(){
+        if (isInvalid(p1) || isInvalid(p2))
+            observer.invalid()
+        else if (tie())
+            observer.tie()
+        else if (p1Won())
             observer.p1Wins()
         else
             observer.p2Wins()
+    }
+
+    function isInvalid(theThrow) {
+        return !["rock", "paper", "scissors"].includes(theThrow)
+    }
+
+    function tie() {
+        return p1 === p2
+    }
+
+    function p1Won() {
+        return p1 === "rock" && p2 === "scissors" ||
+            p1 === "scissors" && p2 === "paper" ||
+            p1 === "paper" && p2 === "rock"
     }
 }
 
