@@ -2,55 +2,9 @@ const React = require("react")
 const ReactDom = require("react-dom")
 const TestUtils = require("react-dom/test-utils")
 
-class PlayForm extends React.Component {
-    constructor () {
-        super()
-        this.state = {
-            message: "",
-            p1Throw: "",
-            p2Throw: ""
-        }
-    }
-
-    submit() {
-        this.props.rps.playRound(this.state.p1Throw, this.state.p2Throw, this)
-    }
-
-    p1ThrowChanged(event) {
-        this.setState({ p1Throw: event.target.value })
-    }
-
-    p2ThrowChanged(event) {
-        this.setState({ p2Throw: event.target.value })
-    }
-
-    p1Wins() {
-        this.setState({ message: "P1 Wins!" })
-    }
-
-    p2Wins() {
-        this.setState({ message: "P2 Wins!" })
-    }
-
-    tie() {
-        this.setState({ message: "TIE!" })
-    }
-
-    invalid() {
-        this.setState({ message: "INVALID!" })
-    }
-
-    render () {
-        return (
-            <div>
-                <p>{this.state.message}</p>
-                <input onChange={this.p1ThrowChanged.bind(this)} type="text" name="p1"/>
-                <input onChange={this.p2ThrowChanged.bind(this)} type="text" name="p2"/>
-                <button onClick={this.submit.bind(this)}>DO IT</button>
-            </div>
-        )
-    }
-}
+const {Round, RoundRepoContract} = require("rps")
+const PlayForm = require("../src/PlayForm")
+const LocalStorageRoundRepo = require("../src/LocalStorageRoundRepo")
 
 describe("PlayForm", function () {
     let domFixture
@@ -132,6 +86,35 @@ describe("PlayForm", function () {
         expect(spyRps.playRound).toHaveBeenCalledWith("p1-throw", "p2-throw", jasmine.any(Object))
     })
 
+    describe("when the rps module tells us there are no rounds", function () {
+        beforeEach(function () {
+            renderApp({
+                getHistory(observer) {
+                    observer.noRounds()
+                }
+            })
+        });
+
+        it("display NO ROUNDS on the page", function () {
+            expect(pageText()).toContain("NO ROUNDS")
+        });
+
+    });
+
+    describe("when the rps modules sends us rounds", function () {
+        beforeEach(function () {
+            renderApp({
+                getHistory(observer){
+                    observer.rounds([new Round("foo", "bar", "baz")])
+                }
+            })
+        });
+
+        it("should display the rounds", function () {
+            expect(pageText()).toContain("foo", "bar", "baz")
+        });
+    });
+
     function submitForm () {
         domFixture.querySelector("button").click()
     }
@@ -147,6 +130,8 @@ describe("PlayForm", function () {
     }
 
     function renderApp (rps) {
+        rps.getHistory = rps.getHistory || function(){}
+
         ReactDom.render(
             <PlayForm rps={rps}/>,
             domFixture
@@ -162,3 +147,5 @@ describe("PlayForm", function () {
         domFixture.remove()
     }
 })
+
+RoundRepoContract(() => new LocalStorageRoundRepo())

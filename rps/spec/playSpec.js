@@ -1,50 +1,4 @@
-function Requests(roundRepo) {
-    this.playRound = function (p1Throw, p2Throw, observer) {
-        new PlayRoundRequest(p1Throw, p2Throw, observer, roundRepo).execute()
-    }
-
-    this.getHistory = function(observer) {
-        if(roundRepo.isEmpty()) {
-            observer.noRounds()
-        } else {
-            observer.rounds(roundRepo.all())
-        }
-    }
-}
-
-function PlayRoundRequest(p1Throw, p2Throw, observer, roundRepo){
-    this.execute = function(){
-        if (isInvalid(p1Throw) || isInvalid(p2Throw))
-            observer.invalid()
-        else if (isTie())
-            observer.tie()
-        else if (p1Wins()) {
-            roundRepo.save(new Round(p1Throw, p2Throw, "p1"))
-            observer.p1Wins()
-        } else
-            observer.p2Wins()
-    }
-
-    function isInvalid(theThrow) {
-        return !["rock", "paper", "scissors"].includes(theThrow)
-    }
-
-    function isTie() {
-        return p1Throw === p2Throw
-    }
-
-    function p1Wins() {
-        return p1Throw === "rock" && p2Throw === "scissors" ||
-            p1Throw === "scissors" && p2Throw === "paper" ||
-            p1Throw === "paper" && p2Throw === "rock"
-    }
-}
-
-function Round(p1Throw, p2Throw, result) {
-    this.p1Throw = p1Throw
-    this.p2Throw = p2Throw
-    this.result = result
-}
+const {Requests, Round, FakeRoundRepo, RoundRepoContract} = require("../src/rps")
 
 describe("play", function () {
     let requests
@@ -179,67 +133,29 @@ describe("history", function () {
         beforeEach(function () {
             roundRepo = new FakeRoundRepo()
             requests = new Requests(roundRepo)
-            observer = jasmine.createSpyObj("observer", ["rounds", "p1Wins"])
+            observer = jasmine.createSpyObj("observer", ["rounds", "p1Wins", "p2Wins", "tie", "invalid"])
             requests.playRound("rock", "scissors", observer)
+            requests.playRound("scissors", "rock", observer)
+            requests.playRound("rock", "rock", observer)
+            requests.playRound("rock", "sailboat", observer)
         })
 
         it("gives the observer the rounds", function () {
             requests.getHistory(observer)
 
-            expect(observer.rounds).toHaveBeenCalledWith([new Round("rock", "scissors", "p1")])
+            expect(observer.rounds).toHaveBeenCalledWith([
+                new Round("rock", "scissors", "p1"),
+                new Round("scissors", "rock", "p2"),
+                new Round("rock", "rock", "tie"),
+                new Round("rock", "sailboat", "invalid"),
+            ])
         })
 
     })
 })
 
-function FakeRoundRepo() {
-    const rounds = [];
-
-    this.isEmpty = function() {
-        return rounds.length === 0;
-    }
-
-    this.save = function(round) {
-        rounds.push(round)
-    }
-
-    this.all = function() {
-        return rounds
-    }
-}
 
 describe("FakeRoundRepo", function () {
     RoundRepoContract(() => new FakeRoundRepo())
 })
 
-function RoundRepoContract(buildRoundRepo) {
-    describe("RoundRepo", function () {
-        let repo;
-
-        beforeEach(function () {
-            repo = buildRoundRepo()
-        })
-
-        describe("when no rounds have been saved", function () {
-            it("returns true from isEmpty", function () {
-                expect(repo.isEmpty()).toBe(true)
-            })
-        })
-
-        describe("when some rounds have been saved", function () {
-            const existingRound = new Round(Math.random(), Math.random(), Math.random())
-
-            beforeEach(function () {
-                repo.save(existingRound)
-            })
-
-            it("returns false from isEmpty", function () {
-                expect(repo.isEmpty()).toBe(false)
-            })
-
-            it("returns the saved rounds from all", function () {
-                expect(repo.all()).toEqual([existingRound])
-            })
-        })
-    })
-}
