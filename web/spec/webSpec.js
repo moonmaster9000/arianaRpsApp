@@ -13,7 +13,7 @@ class PlayForm extends React.Component {
     }
 
     submit() {
-        this.props.rps.play(this.state.p1Throw, this.state.p2Throw, this)
+        this.props.rps.playRound(this.state.p1Throw, this.state.p2Throw, this)
     }
 
     p1ThrowChanged(event) {
@@ -60,7 +60,7 @@ describe("PlayForm", function () {
     describe("when input is invalid", function () {
         beforeEach(function () {
             renderApp({
-                play(p1Throw, p2Throw, observer) {
+                playRound(p1Throw, p2Throw, observer) {
                     observer.invalid()
                 }
             })
@@ -76,7 +76,7 @@ describe("PlayForm", function () {
     describe("when p1 wins", function () {
         beforeEach(function () {
             renderApp({
-                play(p1Throw, p2Throw, observer) {
+                playRound(p1Throw, p2Throw, observer) {
                     observer.p1Wins()
                 }
             })
@@ -92,7 +92,7 @@ describe("PlayForm", function () {
     describe("when p2 wins", function () {
         beforeEach(function () {
             renderApp({
-                play(p1Throw, p2Throw, observer) {
+                playRound(p1Throw, p2Throw, observer) {
                     observer.p2Wins()
                 }
             })
@@ -108,7 +108,7 @@ describe("PlayForm", function () {
     describe("for a tie", function () {
         beforeEach(function () {
             renderApp({
-                play(p1Throw, p2Throw, observer) {
+                playRound(p1Throw, p2Throw, observer) {
                     observer.tie()
                 }
             })
@@ -122,14 +122,14 @@ describe("PlayForm", function () {
     })
 
     it("it passes the entered throws to RPS", function () {
-        let spyRps = jasmine.createSpyObj("spyRps", ["play"])
+        let spyRps = jasmine.createSpyObj("spyRps", ["playRound"])
         renderApp(spyRps)
 
         fillInput("p1", "p1-throw")
         fillInput("p2", "p2-throw")
 
         submitForm()
-        expect(spyRps.play).toHaveBeenCalledWith("p1-throw", "p2-throw", jasmine.any(Object))
+        expect(spyRps.playRound).toHaveBeenCalledWith("p1-throw", "p2-throw", jasmine.any(Object))
     })
 
     function submitForm () {
