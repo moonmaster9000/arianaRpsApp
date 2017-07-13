@@ -1,18 +1,27 @@
-function Requests() {
+function Requests(roundRepo) {
     this.playRound = function (p1Throw, p2Throw, observer) {
-        new PlayRoundRequest(p1Throw, p2Throw, observer).execute()
+        new PlayRoundRequest(p1Throw, p2Throw, observer, roundRepo).execute()
+    }
+
+    this.getHistory = function(observer) {
+        if(roundRepo.isEmpty()) {
+            observer.noRounds()
+        } else {
+            observer.rounds(roundRepo.all())
+        }
     }
 }
 
-function PlayRoundRequest(p1Throw, p2Throw, observer){
+function PlayRoundRequest(p1Throw, p2Throw, observer, roundRepo){
     this.execute = function(){
         if (isInvalid(p1Throw) || isInvalid(p2Throw))
             observer.invalid()
         else if (isTie())
             observer.tie()
-        else if (p1Wins())
+        else if (p1Wins()) {
+            roundRepo.save(new Round(p1Throw, p2Throw, "p1"))
             observer.p1Wins()
-        else
+        } else
             observer.p2Wins()
     }
 
@@ -31,7 +40,11 @@ function PlayRoundRequest(p1Throw, p2Throw, observer){
     }
 }
 
-describe("play", function () {
+function Round(p1Throw, p2Throw, result) {
+
+}
+
+xdescribe("play", function () {
     let requests
 
     beforeEach(function () {
@@ -142,5 +155,62 @@ describe("play", function () {
             expect(observer.invalid).toHaveBeenCalled()
         })
 
+    })
+})
+
+xdescribe("history", function () {
+    describe("when no rounds have been played", function () {
+        it("tells the observer there are no rounds", function () {
+            let observer = jasmine.createSpyObj("observer", ["noRounds"])
+
+            new Requests().getHistory(observer)
+
+            expect(observer.noRounds).toHaveBeenCalled()
+        })
+    })
+
+    describe("when some rounds have been played before", function () {
+        let observer
+        let requests
+        let roundRepo
+
+        beforeEach(function () {
+            roundRepo = {
+                isEmpty() {
+
+                },
+
+                all() {
+
+                },
+
+                save(round) {
+
+                }
+            }
+            requests = new Requests(roundRepo)
+            observer = jasmine.createSpyObj("observer", ["rounds", "p1Wins"])
+            requests.playRound("rock", "scissors", observer)
+        })
+
+        it("gives the observer the rounds", function () {
+            requests.getHistory(observer)
+
+            expect(observer.rounds).toHaveBeenCalledWith([new Round("rock", "scissors", "p1")])
+        })
+
+    })
+})
+
+function FakeRoundRepo() {
+
+}
+
+describe("RoundRepo", function () {
+    describe("when no rounds have been saved", function () {
+        it("returns true from isEmpty", function () {
+            let repo = new FakeRoundRepo()
+            expect(repo.isEmpty()).toBe(true)
+        })
     })
 })
