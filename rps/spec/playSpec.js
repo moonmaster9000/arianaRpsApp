@@ -41,14 +41,16 @@ function PlayRoundRequest(p1Throw, p2Throw, observer, roundRepo){
 }
 
 function Round(p1Throw, p2Throw, result) {
-
+    this.p1Throw = p1Throw
+    this.p2Throw = p2Throw
+    this.result = result
 }
 
-xdescribe("play", function () {
+describe("play", function () {
     let requests
 
     beforeEach(function () {
-        requests = new Requests()
+        requests = new Requests(new FakeRoundRepo())
     })
 
     describe("p1 wins scenarios", function () {
@@ -158,12 +160,12 @@ xdescribe("play", function () {
     })
 })
 
-xdescribe("history", function () {
+describe("history", function () {
     describe("when no rounds have been played", function () {
         it("tells the observer there are no rounds", function () {
             let observer = jasmine.createSpyObj("observer", ["noRounds"])
 
-            new Requests().getHistory(observer)
+            new Requests(new FakeRoundRepo()).getHistory(observer)
 
             expect(observer.noRounds).toHaveBeenCalled()
         })
@@ -175,19 +177,7 @@ xdescribe("history", function () {
         let roundRepo
 
         beforeEach(function () {
-            roundRepo = {
-                isEmpty() {
-
-                },
-
-                all() {
-
-                },
-
-                save(round) {
-
-                }
-            }
+            roundRepo = new FakeRoundRepo()
             requests = new Requests(roundRepo)
             observer = jasmine.createSpyObj("observer", ["rounds", "p1Wins"])
             requests.playRound("rock", "scissors", observer)
@@ -203,14 +193,53 @@ xdescribe("history", function () {
 })
 
 function FakeRoundRepo() {
+    const rounds = [];
 
+    this.isEmpty = function() {
+        return rounds.length === 0;
+    }
+
+    this.save = function(round) {
+        rounds.push(round)
+    }
+
+    this.all = function() {
+        return rounds
+    }
 }
 
-describe("RoundRepo", function () {
-    describe("when no rounds have been saved", function () {
-        it("returns true from isEmpty", function () {
-            let repo = new FakeRoundRepo()
-            expect(repo.isEmpty()).toBe(true)
+describe("FakeRoundRepo", function () {
+    RoundRepoContract(() => new FakeRoundRepo())
+})
+
+function RoundRepoContract(buildRoundRepo) {
+    describe("RoundRepo", function () {
+        let repo;
+
+        beforeEach(function () {
+            repo = buildRoundRepo()
+        })
+
+        describe("when no rounds have been saved", function () {
+            it("returns true from isEmpty", function () {
+                expect(repo.isEmpty()).toBe(true)
+            })
+        })
+
+        describe("when some rounds have been saved", function () {
+            const existingRound = new Round(Math.random(), Math.random(), Math.random())
+
+            beforeEach(function () {
+                repo.save(existingRound)
+            })
+
+            it("returns false from isEmpty", function () {
+                expect(repo.isEmpty()).toBe(false)
+            })
+
+            it("returns the saved rounds from all", function () {
+                expect(repo.all()).toEqual([existingRound])
+            })
         })
     })
-})
+}
